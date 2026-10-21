@@ -1,0 +1,55 @@
+/* Theme Studio — 仅用于插件自身的设置界面，主题效果由运行时样式表注入。 */
+
+.ts-settings .ts-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ts-settings .ts-color-picker {
+  width: 34px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: none;
+  cursor: pointer;
+}
+
+.ts-settings .ts-color-label {
+  min-width: 6.5em;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+}
+
+.ts-settings .ts-color-reset {
+  height: 26px;
+  padding: 0 8px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.ts-settings .ts-color-reset:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.ts-settings .ts-number-input {
+  width: 5.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ts-settings .ts-number-input input {
+  text-align: right;
+}
+
+.ts-status {
+  cursor: pointer;
+}
