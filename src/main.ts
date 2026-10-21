@@ -27,7 +27,7 @@ export default class ThemeStudioPlugin extends Plugin {
 
     this.addCommand({
       id: "open-settings",
-      name: tr("Open Theme Studio settings", "打开 Theme Studio 设置"),
+      name: tr("Open Theme View Studio settings", "打开 Theme View Studio 设置"),
       callback: () => this.openSettings(),
     });
 

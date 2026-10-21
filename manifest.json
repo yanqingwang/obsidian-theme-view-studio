@@ -1,10 +1,10 @@
 {
-  "id": "theme-studio",
-  "name": "Theme Studio",
-  "version": "1.1.0",
+  "id": "theme-view-studio",
+  "name": "Theme View Studio",
+  "version": "1.2.0",
   "minAppVersion": "1.5.0",
-  "description": "Folder-scoped appearance presets: reading width, line spacing, background colour/image, transparency, and an e-ink mode. Apply a different look to each folder, with one default for the rest of the vault.",
+  "description": "Folder-scoped appearance: reading width, typography, background image and opacity, transparency, and an e-ink mode. One default theme for the vault, different looks per folder.",
   "author": "rosswang",
-  "authorUrl": "",
+  "authorUrl": "https://github.com/yanqingwang",
   "isDesktopOnly": false
 }
