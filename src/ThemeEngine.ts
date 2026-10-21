@@ -1,17 +1,68 @@
-import { App, TFile } from "obsidian";
+import { App } from "obsidian";
 import type { ThemeProfile, ThemeStudioSettings } from "./types";
 import { resolveProfile } from "./ScopeResolver";
 
-const STYLE_EL_ID = "theme-studio-dynamic";
 const BODY_PROFILE_ATTR = "data-ts-profile";
 const BODY_EINK_ATTR = "data-ts-eink";
+
+/**
+ * 运行时只在 <body> 上写这些属性 / CSS 变量，具体规则全部写在 styles.css 里。
+ * 这样既不用动态创建 <style>，也能在切换主题时即时生效。
+ */
+const BODY_ATTRS = [
+  BODY_PROFILE_ATTR,
+  BODY_EINK_ATTR,
+  "data-ts-reading-width",
+  "data-ts-editing-width",
+  "data-ts-font-size",
+  "data-ts-line-height",
+  "data-ts-paragraph-spacing",
+  "data-ts-font-family",
+  "data-ts-background-image",
+  "data-ts-blur",
+] as const;
+
+const BODY_PROPS = [
+  "--ts-reading-width",
+  "--ts-editing-width",
+  "--ts-font-size",
+  "--ts-line-height",
+  "--ts-paragraph-spacing",
+  "--ts-font-family",
+  "--ts-bg-image",
+  "--ts-bg-scrim",
+  "--ts-blur",
+  "--ts-eink-contrast",
+  "--background-primary",
+  "--background-primary-alt",
+  "--background-secondary",
+  "--background-secondary-alt",
+  "--text-normal",
+  "--inline-title-color",
+  "--text-title-h1",
+  "--text-title-h2",
+  "--text-title-h3",
+  "--text-title-h4",
+  "--text-title-h5",
+  "--text-title-h6",
+  "--text-muted",
+  "--text-faint",
+  "--color-accent",
+  "--interactive-accent",
+  "--text-accent",
+  "--link-color",
+  "--link-external-color",
+] as const;
 
 /** #rgb / #rrggbb → rgba(...)，透明度按需叠加。 */
 export function hexToRgba(hex: string, alpha: number): string {
   const raw = hex.trim().replace(/^#/, "");
   const full =
     raw.length === 3
-      ? raw.split("").map((c) => c + c).join("")
+      ? raw
+          .split("")
+          .map((c) => c + c)
+          .join("")
       : raw.length === 6
         ? raw
         : "000000";
@@ -28,8 +79,6 @@ function toImageUrl(app: App, value: string): string | null {
   if (!raw) return null;
   if (/^(https?:|data:|app:\/\/)/i.test(raw)) return raw;
   const path = raw.replace(/^\/+/, "");
-  const file = app.vault.getAbstractFileByPath(path);
-  if (file instanceof TFile) return app.vault.adapter.getResourcePath(path);
   return app.vault.adapter.getResourcePath(path);
 }
 
@@ -38,176 +87,139 @@ function cssEscape(value: string): string {
 }
 
 /**
- * 把一个主题编译成 CSS。
- *
- * 通过 `body[data-ts-profile="<id>"]` 做作用域，切换主题只需改 body 的一个属性，
- * 不需要重建样式表，也不会和用户当前启用的 Obsidian 主题打架（选择器更具体）。
- */
-export function buildProfileCss(app: App, p: ThemeProfile): string {
-  const sel = `body[${BODY_PROFILE_ATTR}="${cssEscape(p.id)}"]`;
-  const out: string[] = [];
-
-  // ── 正文宽度 ──────────────────────────────────────────────────────────────
-  // --file-line-width 只在"可读行宽"开启时生效；关闭时补一条 max-width 兜底。
-  // 宽度为 0 时整条不生成，让当前 Obsidian 主题的默认值继续生效。
-  if (p.readingWidth > 0) {
-    const rw = `${p.readingWidth}px`;
-    out.push(`${sel} .markdown-preview-view { --file-line-width: ${rw}; }`);
-    out.push(
-      `${sel} .markdown-preview-view:not(.is-readable-line-width) .markdown-preview-sizer` +
-        ` { max-width: ${rw}; margin-inline: auto; }`,
-    );
-  }
-  if (p.editingWidth > 0) {
-    const ew = `${p.editingWidth}px`;
-    out.push(`${sel} .markdown-source-view { --file-line-width: ${ew}; }`);
-    out.push(
-      `${sel} .markdown-source-view:not(.is-readable-line-width) .cm-content` +
-        ` { max-width: ${ew}; margin-inline: auto; }`,
-    );
-  }
-
-  // ── 排版 ──────────────────────────────────────────────────────────────────
-  const typography: string[] = [];
-  if (p.lineHeight > 0) typography.push(`--line-height-normal: ${p.lineHeight};`);
-  if (p.fontSize > 0) typography.push(`--font-text-size: ${p.fontSize}px;`);
-  if (p.paragraphSpacing > 0) typography.push(`--p-spacing: ${p.paragraphSpacing}em;`);
-  if (p.fontFamily.trim()) typography.push(`--font-text: ${p.fontFamily.trim()};`);
-  if (typography.length) {
-    out.push(`${sel} .markdown-preview-view, ${sel} .markdown-source-view { ${typography.join(" ")} }`);
-  }
-
-  // ── 背景与透明度 ──────────────────────────────────────────────────────────
-  if (p.bgColor) {
-    const primary = hexToRgba(p.bgColor, p.bgOpacity);
-    const vars = [
-      `--background-primary: ${primary};`,
-      `--background-primary-alt: ${primary};`,
-    ];
-    // 只有用户真的想要半透明侧栏时才改写次级背景，避免把侧栏和正文刷成同色。
-    if (p.panelOpacity < 1) {
-      const panel = hexToRgba(p.bgColor, Math.min(1, p.bgOpacity * p.panelOpacity));
-      vars.push(`--background-secondary: ${panel};`, `--background-secondary-alt: ${panel};`);
-    }
-    out.push(`${sel} { ${vars.join(" ")} }`);
-  }
-
-  const imageUrl = p.bgImage ? toImageUrl(app, p.bgImage) : null;
-  if (imageUrl) {
-    const scrim = hexToRgba(p.bgColor || "#000000", Math.max(p.bgOpacity, 0.15));
-    out.push(
-      `${sel} .workspace { background-image: linear-gradient(${scrim}, ${scrim}), url("${cssEscape(imageUrl)}");` +
-        ` background-size: cover; background-position: center center; background-repeat: no-repeat; }`,
-    );
-  }
-
-  if (p.blur > 0) {
-    out.push(
-      `${sel} .workspace-split.mod-left-split .workspace-leaf-content,` +
-        `${sel} .workspace-split.mod-right-split .workspace-leaf-content` +
-        ` { backdrop-filter: blur(${p.blur}px); }`,
-    );
-  }
-
-  // ── 文字颜色 ──────────────────────────────────────────────────────────────
-  const colors: string[] = [];
-  if (p.textColor) {
-    colors.push(
-      `--text-normal: ${p.textColor};`,
-      `--inline-title-color: ${p.textColor};`,
-      `--text-title-h1: ${p.textColor};`,
-      `--text-title-h2: ${p.textColor};`,
-      `--text-title-h3: ${p.textColor};`,
-      `--text-title-h4: ${p.textColor};`,
-      `--text-title-h5: ${p.textColor};`,
-      `--text-title-h6: ${p.textColor};`,
-    );
-  }
-  if (p.mutedColor) colors.push(`--text-muted: ${p.mutedColor};`, `--text-faint: ${p.mutedColor};`);
-  if (p.accentColor) {
-    colors.push(
-      `--color-accent: ${p.accentColor};`,
-      `--interactive-accent: ${p.accentColor};`,
-      `--text-accent: ${p.accentColor};`,
-      `--link-color: ${p.accentColor};`,
-      `--link-external-color: ${p.accentColor};`,
-    );
-  }
-  if (colors.length) out.push(`${sel} { ${colors.join(" ")} }`);
-
-  return out.join("\n");
-}
-
-/** 墨水屏模式是全局开关（与当前生效文件绑定的主题决定），单独成组。 */
-function buildEinkCss(profiles: ThemeProfile[]): string {
-  const contrastByProfile = profiles
-    .filter((p) => p.eink)
-    .map(
-      (p) =>
-        `body[${BODY_PROFILE_ATTR}="${cssEscape(p.id)}"][${BODY_EINK_ATTR}="1"]` +
-        ` { --ts-eink-contrast: ${p.einkContrast}; }`,
-    )
-    .join("\n");
-
-  return [
-    contrastByProfile,
-    `body[${BODY_EINK_ATTR}="1"] { --ts-eink-contrast: 1; }`,
-    `body[${BODY_EINK_ATTR}="1"] .workspace { filter: grayscale(1) contrast(var(--ts-eink-contrast)); }`,
-    `body[${BODY_EINK_ATTR}="1"] .workspace *, body[${BODY_EINK_ATTR}="1"] .workspace *::before,` +
-      ` body[${BODY_EINK_ATTR}="1"] .workspace *::after { transition: none !important; animation: none !important; }`,
-    `body[${BODY_EINK_ATTR}="1"] .workspace { box-shadow: none; }`,
-    `body[${BODY_EINK_ATTR}="1"] .workspace .markdown-preview-view,` +
-      ` body[${BODY_EINK_ATTR}="1"] .workspace .cm-editor { text-shadow: none; }`,
-  ].join("\n");
-}
-
-/**
- * 负责：生成样式表、根据当前活动文件切换 body 上的主题属性。
+ * 负责：把当前文件的主题写到 body 上（属性 + CSS 变量）。
+ * CSS 规则本身固定在 styles.css，避免动态注入 <style>。
  */
 export class ThemeEngine {
-  private styleEl: HTMLStyleElement | null = null;
-
   constructor(
     private app: App,
     private getSettings: () => ThemeStudioSettings,
   ) {}
 
   mount(): void {
-    if (this.styleEl) return;
-    const el = document.createElement("style");
-    el.id = STYLE_EL_ID;
-    document.head.appendChild(el);
-    this.styleEl = el;
-    this.render();
-  }
-
-  unmount(): void {
-    this.styleEl?.remove();
-    this.styleEl = null;
-    document.body.removeAttribute(BODY_PROFILE_ATTR);
-    document.body.removeAttribute(BODY_EINK_ATTR);
-  }
-
-  /** 重新生成样式表（设置改动后调用）。 */
-  render(): void {
-    if (!this.styleEl) return;
-    const settings = this.getSettings();
-    const blocks = settings.profiles.map((p) => buildProfileCss(this.app, p));
-    blocks.push(buildEinkCss(settings.profiles));
-    this.styleEl.textContent = blocks.join("\n\n");
     this.apply();
   }
 
-  /** 按当前活动文件解析主题并落到 body 属性上。 */
+  unmount(): void {
+    this.clear(document.body);
+  }
+
+  /** 设置改动后重新应用当前主题。 */
+  render(): void {
+    this.apply();
+  }
+
+  /** 按当前活动文件解析主题并应用到 body。 */
   apply(): ThemeProfile {
     const settings = this.getSettings();
     const file = this.app.workspace.getActiveFile();
     const profile = resolveProfile(file ? file.path : null, settings);
+    const body = document.body;
 
-    document.body.setAttribute(BODY_PROFILE_ATTR, profile.id);
-    if (profile.eink) document.body.setAttribute(BODY_EINK_ATTR, "1");
-    else document.body.removeAttribute(BODY_EINK_ATTR);
+    this.clear(body);
+    body.setAttribute(BODY_PROFILE_ATTR, profile.id);
+
+    // ── 正文宽度 ──────────────────────────────────────────────────────────────
+    if (profile.readingWidth > 0) {
+      body.setAttribute("data-ts-reading-width", "1");
+      body.style.setProperty("--ts-reading-width", `${profile.readingWidth}px`);
+    }
+    if (profile.editingWidth > 0) {
+      body.setAttribute("data-ts-editing-width", "1");
+      body.style.setProperty("--ts-editing-width", `${profile.editingWidth}px`);
+    }
+
+    // ── 排版 ──────────────────────────────────────────────────────────────────
+    if (profile.lineHeight > 0) {
+      body.setAttribute("data-ts-line-height", "1");
+      body.style.setProperty("--ts-line-height", String(profile.lineHeight));
+    }
+    if (profile.fontSize > 0) {
+      body.setAttribute("data-ts-font-size", "1");
+      body.style.setProperty("--ts-font-size", `${profile.fontSize}px`);
+    }
+    if (profile.paragraphSpacing > 0) {
+      body.setAttribute("data-ts-paragraph-spacing", "1");
+      body.style.setProperty("--ts-paragraph-spacing", `${profile.paragraphSpacing}em`);
+    }
+    const fontFamily = profile.fontFamily.trim();
+    if (fontFamily) {
+      body.setAttribute("data-ts-font-family", "1");
+      body.style.setProperty("--ts-font-family", fontFamily);
+    }
+
+    // ── 背景与透明度 ──────────────────────────────────────────────────────────
+    if (profile.bgColor) {
+      const primary = hexToRgba(profile.bgColor, profile.bgOpacity);
+      body.style.setProperty("--background-primary", primary);
+      body.style.setProperty("--background-primary-alt", primary);
+
+      // 只有用户真的想要半透明侧栏时才改写次级背景，避免把侧栏和正文刷成同色。
+      if (profile.panelOpacity < 1) {
+        const panel = hexToRgba(
+          profile.bgColor,
+          Math.min(1, profile.bgOpacity * profile.panelOpacity),
+        );
+        body.style.setProperty("--background-secondary", panel);
+        body.style.setProperty("--background-secondary-alt", panel);
+      }
+    }
+
+    const imageUrl = profile.bgImage ? toImageUrl(this.app, profile.bgImage) : null;
+    if (imageUrl) {
+      const scrim = hexToRgba(profile.bgColor || "#000000", Math.max(profile.bgOpacity, 0.15));
+      body.setAttribute("data-ts-background-image", "1");
+      body.style.setProperty("--ts-bg-image", `url("${cssEscape(imageUrl)}")`);
+      body.style.setProperty("--ts-bg-scrim", scrim);
+    }
+
+    if (profile.blur > 0) {
+      body.setAttribute("data-ts-blur", "1");
+      body.style.setProperty("--ts-blur", `${profile.blur}px`);
+    }
+
+    // ── 文字颜色 ──────────────────────────────────────────────────────────────
+    if (profile.textColor) {
+      for (const prop of [
+        "--text-normal",
+        "--inline-title-color",
+        "--text-title-h1",
+        "--text-title-h2",
+        "--text-title-h3",
+        "--text-title-h4",
+        "--text-title-h5",
+        "--text-title-h6",
+      ]) {
+        body.style.setProperty(prop, profile.textColor);
+      }
+    }
+    if (profile.mutedColor) {
+      body.style.setProperty("--text-muted", profile.mutedColor);
+      body.style.setProperty("--text-faint", profile.mutedColor);
+    }
+    if (profile.accentColor) {
+      for (const prop of [
+        "--color-accent",
+        "--interactive-accent",
+        "--text-accent",
+        "--link-color",
+        "--link-external-color",
+      ]) {
+        body.style.setProperty(prop, profile.accentColor);
+      }
+    }
+
+    // ── 墨水屏 ────────────────────────────────────────────────────────────────
+    if (profile.eink) {
+      body.setAttribute(BODY_EINK_ATTR, "1");
+      body.style.setProperty("--ts-eink-contrast", String(profile.einkContrast));
+    }
 
     return profile;
+  }
+
+  private clear(body: HTMLElement): void {
+    for (const attr of BODY_ATTRS) body.removeAttribute(attr);
+    for (const prop of BODY_PROPS) body.style.removeProperty(prop);
   }
 }

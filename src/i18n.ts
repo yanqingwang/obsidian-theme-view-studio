@@ -1,15 +1,12 @@
+import { getLanguage } from "obsidian";
+
 /**
- * Obsidian stores the UI language in localStorage under `language` (e.g. `zh`, `en`).
- * Read it directly so the plugin follows the app language without its own setting.
+ * Obsidian's own UI language, with the browser locale as a fallback for
+ * environments where the language setting is not available.
  */
 export function isChineseUI(): boolean {
-  try {
-    const lang = window.localStorage.getItem("language");
-    if (lang) return lang.toLowerCase().startsWith("zh");
-  } catch {
-    // localStorage unavailable — fall through to the system locale
-  }
-  return (navigator.language || "").toLowerCase().startsWith("zh");
+  const lang = getLanguage() || navigator.language || "";
+  return lang.toLowerCase().startsWith("zh");
 }
 
 /** Pick the Chinese string when Obsidian's UI language is Chinese, English otherwise. */

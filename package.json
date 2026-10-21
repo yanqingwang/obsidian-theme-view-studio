@@ -1,6 +1,6 @@
 {
   "name": "theme-view-studio",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Folder-scoped appearance presets for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -16,7 +16,6 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.11.0",
-    "builtin-modules": "^3.3.0",
     "esbuild": "^0.20.0",
     "obsidian": "latest",
     "tslib": "^2.6.2",

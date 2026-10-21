@@ -1,4 +1,89 @@
-/* Theme Studio — 仅用于插件自身的设置界面，主题效果由运行时样式表注入。 */
+/*
+ * Theme View Studio
+ *
+ * The active theme's values are written to <body> as attributes and CSS custom
+ * properties by ThemeEngine at runtime. The rules below only consume those
+ * properties, so no stylesheet is generated or injected from JavaScript.
+ */
+
+/* ── Reading width ─────────────────────────────────────────────────────────── */
+
+body[data-ts-reading-width] .markdown-preview-view {
+  --file-line-width: var(--ts-reading-width);
+}
+
+body[data-ts-reading-width] .markdown-preview-view:not(.is-readable-line-width) .markdown-preview-sizer {
+  max-width: var(--ts-reading-width);
+  margin-inline: auto;
+}
+
+/* ── Editing width ─────────────────────────────────────────────────────────── */
+
+body[data-ts-editing-width] .markdown-source-view {
+  --file-line-width: var(--ts-editing-width);
+}
+
+body[data-ts-editing-width] .markdown-source-view:not(.is-readable-line-width) .cm-content {
+  max-width: var(--ts-editing-width);
+  margin-inline: auto;
+}
+
+/* ── Typography ────────────────────────────────────────────────────────────── */
+
+body[data-ts-font-size] .markdown-preview-view,
+body[data-ts-font-size] .markdown-source-view {
+  --font-text-size: var(--ts-font-size);
+}
+
+body[data-ts-line-height] .markdown-preview-view,
+body[data-ts-line-height] .markdown-source-view {
+  --line-height-normal: var(--ts-line-height);
+}
+
+body[data-ts-paragraph-spacing] .markdown-preview-view,
+body[data-ts-paragraph-spacing] .markdown-source-view {
+  --p-spacing: var(--ts-paragraph-spacing);
+}
+
+body[data-ts-font-family] .markdown-preview-view,
+body[data-ts-font-family] .markdown-source-view {
+  --font-text: var(--ts-font-family);
+}
+
+/* ── Background image and blur ─────────────────────────────────────────────── */
+
+body[data-ts-background-image] .workspace {
+  background-image: linear-gradient(var(--ts-bg-scrim), var(--ts-bg-scrim)), var(--ts-bg-image);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+body[data-ts-blur] .workspace-split.mod-left-split .workspace-leaf-content,
+body[data-ts-blur] .workspace-split.mod-right-split .workspace-leaf-content {
+  backdrop-filter: blur(var(--ts-blur));
+}
+
+/* ── E-ink mode ────────────────────────────────────────────────────────────── */
+
+body[data-ts-eink="1"] .workspace {
+  filter: grayscale(1) contrast(var(--ts-eink-contrast, 1));
+  box-shadow: none;
+}
+
+body[data-ts-eink="1"] .workspace *,
+body[data-ts-eink="1"] .workspace *::before,
+body[data-ts-eink="1"] .workspace *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+body[data-ts-eink="1"] .workspace .markdown-preview-view,
+body[data-ts-eink="1"] .workspace .cm-editor {
+  text-shadow: none;
+}
+
+/* ── Settings UI ───────────────────────────────────────────────────────────── */
 
 .ts-settings .ts-color-row {
   display: flex;
@@ -38,16 +123,6 @@
 .ts-settings .ts-color-reset:hover {
   color: var(--text-normal);
   background: var(--background-modifier-hover);
-}
-
-.ts-settings .ts-number-input {
-  width: 5.5em;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.ts-settings .ts-number-input input {
-  text-align: right;
 }
 
 .ts-status {
