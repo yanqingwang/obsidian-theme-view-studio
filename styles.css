@@ -71,11 +71,15 @@ body[data-ts-eink="1"] .workspace {
   box-shadow: none;
 }
 
+body[data-ts-eink="1"] .workspace,
 body[data-ts-eink="1"] .workspace *,
+body[data-ts-eink="1"] .workspace .workspace-leaf *,
 body[data-ts-eink="1"] .workspace *::before,
-body[data-ts-eink="1"] .workspace *::after {
-  transition: none !important;
-  animation: none !important;
+body[data-ts-eink="1"] .workspace *::after,
+body[data-ts-eink="1"] .workspace .workspace-leaf *::before,
+body[data-ts-eink="1"] .workspace .workspace-leaf *::after {
+  transition: none;
+  animation: none;
 }
 
 body[data-ts-eink="1"] .workspace .markdown-preview-view,
