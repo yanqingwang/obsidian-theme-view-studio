@@ -1,6 +1,7 @@
 import { Plugin } from "obsidian";
 import { DEFAULT_SETTINGS, ThemeProfile, ThemeStudioSettings } from "./types";
 import { ThemeEngine } from "./ThemeEngine";
+import { repairDashboardSettings } from "./dashboard/repair";
 import { ThemeStudioSettingTab } from "./settings/SettingsTab";
 import { PRESETS } from "./presets";
 import { tr } from "./i18n";
@@ -102,6 +103,10 @@ export default class ThemeStudioPlugin extends Plugin {
     if (!this.settings.profiles.some((p) => p.id === this.settings.defaultProfileId)) {
       this.settings.defaultProfileId = this.settings.profiles[0].id;
     }
+    // 主页是 v1.3.0 才有的字段，老用户的 data.json 里根本没有它；而 Object.assign 是浅合并，
+    // 所以必须显式修一次，不能指望默认值兜住（repair 对任何奇怪输入都不抛异常）。
+    this.settings.dashboard = repairDashboardSettings(stored?.dashboard);
+    this.settings.schemaVersion = DEFAULT_SETTINGS.schemaVersion;
   }
 
   /** 首次安装时把内置预设全部装进主题列表，用户直接就能选。 */
