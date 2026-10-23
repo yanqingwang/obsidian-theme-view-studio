@@ -10,6 +10,8 @@ import {
 import type ThemeStudioPlugin from "../main";
 import type { ThemeProfile } from "../types";
 import { normalizeFolder } from "../ScopeResolver";
+import { resolveBlockKey } from "./dashboardGroups";
+import type { DashboardSettings } from "../types";
 import { PRESETS } from "../presets";
 import { tr } from "../i18n";
 
@@ -51,6 +53,7 @@ export class ThemeStudioSettingTab extends PluginSettingTab {
     }
     items.push(this.rulesList());
     items.push(this.addRuleGroup());
+    items.push(...this.plugin.dashboardSettingItems);
     return items;
   }
 
@@ -71,6 +74,21 @@ export class ThemeStudioSettingTab extends PluginSettingTab {
       const [, rawIndex, field] = key.split(".");
       const rule = settings.scopeRules[Number(rawIndex)];
       return rule && field === "profileId" ? rule.profileId : undefined;
+    }
+
+    // 主页总开关那几项
+    if (key.startsWith("dashboard.")) {
+      const field = key.slice("dashboard.".length);
+      const d = settings.dashboard as unknown as Record<string, unknown>;
+      return field.startsWith("newBlock.")
+        ? this.newBlockValue(field.slice("newBlock.".length))
+        : d[field];
+    }
+
+    // 积木字段：key 用稳定 id 而不是下标 —— 列表可排序可删除，下标会绑错块。
+    const resolved = resolveBlockKey(settings.dashboard.blocks, key);
+    if (resolved) {
+      return (resolved.block as unknown as Record<string, unknown>)[resolved.field];
     }
 
     return undefined;
@@ -130,6 +148,59 @@ export class ThemeStudioSettingTab extends PluginSettingTab {
         return this.plugin.persist();
       }
     }
+
+    if (key.startsWith("dashboard.")) {
+      const field = key.slice("dashboard.".length);
+      if (field.startsWith("newBlock.")) {
+        this.setNewBlockValue(field.slice("newBlock.".length), value);
+        return;
+      }
+      const d = this.plugin.settings.dashboard as unknown as Record<string, unknown>;
+      const name = field as keyof DashboardSettings;
+      if (name === "gap" || name === "intervalMin") {
+        const n = typeof value === "number" ? value : Number(value);
+        if (!Number.isFinite(n)) return;
+        d[name] = n;
+      } else if (name === "enabled" || name === "openOnStartup") {
+        d[name] = Boolean(value);
+      } else if (name === "githubToken" || name === "gridId") {
+        d[name] = String(value).trim();
+      } else {
+        return;
+      }
+      return this.plugin.persist();
+    }
+
+    const resolved = resolveBlockKey(this.plugin.settings.dashboard.blocks, key);
+    if (resolved) {
+      const record = resolved.block as unknown as Record<string, unknown>;
+      const v = typeof value === "string" ? value.trim() : value;
+      record[resolved.field] = typeof v === "number" && !Number.isFinite(v) ? record[resolved.field] : v;
+      return this.plugin.persist();
+    }
+  }
+
+  // ── 主页：添加积木的临时表单值 ────────────────────────────────────────────
+
+  private newBlockValue(field: string): unknown {
+    const pending = this.plugin.dashboardEditor;
+    if (field === "type") return pending.pendingType;
+    if (field === "size") return pending.pendingSize;
+    if (field === "title") return pending.pendingTitle;
+    return undefined;
+  }
+
+  private setNewBlockValue(field: string, value: unknown): void {
+    const pending = this.plugin.dashboardEditor;
+    if (field === "type") {
+      pending.pendingType = String(value) as typeof pending.pendingType;
+    } else if (field === "size") {
+      const n = typeof value === "number" ? value : Number(value);
+      if (Number.isFinite(n)) pending.pendingSize = Math.trunc(n);
+    } else if (field === "title") {
+      pending.pendingTitle = String(value ?? "");
+    }
+    // 临时状态不落盘，也不触发重排。
   }
 
   // ── 分组 ────────────────────────────────────────────────────────────────────

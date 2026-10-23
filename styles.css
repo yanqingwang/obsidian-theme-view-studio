@@ -132,3 +132,301 @@ body[data-ts-eink="1"] .workspace .cm-editor {
 .ts-status {
   cursor: pointer;
 }
+
+/* ── Dashboard ────────────────────────────────────────────────────────────── */
+/* 布局全部靠 CSS 变量 + 断点：JS 只在挂载和设置变更时算一次排版，写进 --ts-dash-*，
+   之后窗口怎么变都不需要重排（onResize 是空的），移动端拖窗口也不会卡。 */
+
+.ts-dash {
+  padding: var(--size-4-4, 16px);
+  overflow-y: auto;
+}
+
+.ts-dash-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ts-dash-toolbar-title {
+  flex: 1;
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold, 600);
+}
+
+.ts-dash-toolbar-btn {
+  min-height: 28px;
+  padding: 0 10px;
+  color: var(--text-normal);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+
+.ts-dash-toolbar-btn:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+}
+
+.ts-dash-toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ts-dash-grid {
+  display: grid;
+  /* minmax(0, 1fr) 是必须的：否则一段长代码会把轨道撑破。 */
+  grid-template-columns: repeat(var(--ts-dash-cols, 3), minmax(0, 1fr));
+  grid-auto-rows: minmax(var(--ts-dash-row-min, 120px), auto);
+  gap: var(--ts-dash-gap, 12px);
+}
+
+.ts-dash-block {
+  display: flex;
+  flex-direction: column;
+  grid-column: span var(--ts-dash-c, 1);
+  grid-row: span var(--ts-dash-r, 1);
+  min-width: 0; /* 同上：允许子元素收缩，而不是撑破格子 */
+  padding: 10px 12px;
+  overflow: hidden;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+
+.ts-dash-block-head {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  min-height: 22px;
+  margin-bottom: 6px;
+}
+
+.ts-dash-block-title {
+  flex: 1;
+  overflow: hidden;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold, 600);
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ts-dash-block-stale {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-error);
+}
+
+.ts-dash-block-stale:not(.is-visible) {
+  display: none;
+}
+
+.ts-dash-icon-btn {
+  padding: 0 4px;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.ts-dash-icon-btn:hover {
+  color: var(--text-normal);
+}
+
+.ts-dash-block-body {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+.ts-dash-v-big {
+  font-size: var(--font-ui-large, 1.4em);
+  font-weight: var(--font-semibold, 600);
+  line-height: 1.2;
+  color: var(--text-normal);
+}
+
+.ts-dash-field {
+  overflow-wrap: anywhere;
+  color: var(--text-normal);
+}
+
+.ts-dash-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ts-dash-list-item {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 1px 0;
+}
+
+.ts-dash-list-link {
+  flex: 1;
+  overflow: hidden;
+  color: var(--text-normal);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ts-dash-list-link:hover {
+  color: var(--interactive-accent);
+  text-decoration: underline;
+}
+
+.ts-dash-list-time {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.ts-dash-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+}
+
+.ts-dash-cover {
+  flex: 0 0 auto;
+  max-height: 120px;
+  overflow: hidden;
+  border-radius: var(--radius-s);
+}
+
+.ts-dash-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ts-dash-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ts-dash-card-title {
+  color: var(--text-normal);
+  font-weight: var(--font-semibold, 600);
+  text-decoration: none;
+}
+
+.ts-dash-card-title:hover {
+  color: var(--interactive-accent);
+  text-decoration: underline;
+}
+
+.ts-dash-card-summary {
+  overflow: hidden;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.ts-dash-block-code {
+  max-height: 100%;
+  margin: 0;
+  overflow: auto;
+  font-size: var(--font-ui-smaller);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ts-dash-embed {
+  overflow-wrap: anywhere;
+}
+
+.ts-dash-status {
+  margin-top: 6px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.ts-dash-status[data-kind="error"] {
+  color: var(--text-error);
+}
+
+.ts-dash-empty {
+  color: var(--text-faint);
+}
+
+.ts-dash-overflow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ts-dash-gap, 12px);
+  margin-top: var(--ts-dash-gap, 12px);
+}
+
+.ts-dash-hint {
+  padding: 24px 0;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* 窄屏：两列；块的大小按比例换算过（--ts-dash-c-md 由 JS 按比例算好写进变量）。 */
+@media (max-width: 900px) {
+  .ts-dash-grid {
+    grid-template-columns: repeat(var(--ts-dash-cols-md, 2), minmax(0, 1fr));
+  }
+
+  .ts-dash-block {
+    grid-column: span var(--ts-dash-c-md, 1);
+    grid-row: span var(--ts-dash-r-md, 1);
+  }
+}
+
+/* 手机：单列 + 触摸目标放大到 44px。 */
+@media (max-width: 600px) {
+  .ts-dash {
+    padding: var(--size-4-2, 8px);
+  }
+
+  .ts-dash-grid {
+    grid-template-columns: repeat(var(--ts-dash-cols-sm, 1), minmax(0, 1fr));
+    grid-auto-rows: minmax(96px, auto);
+  }
+
+  .ts-dash-block {
+    grid-column: span var(--ts-dash-c-sm, 1);
+    grid-row: span var(--ts-dash-r-sm, 1);
+  }
+
+  .ts-dash-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .ts-dash-toolbar-btn,
+  .ts-dash-icon-btn {
+    min-height: 44px;
+    padding: 0 12px;
+  }
+
+  .ts-dash-list-item {
+    min-height: 32px;
+  }
+}
+
+/* 墨水屏：去掉阴影与毛玻璃（灰度滤镜下会糊），并靠间距而不是阴影来分隔。 */
+body[data-ts-eink="1"] .ts-dash-block {
+  border-color: var(--text-normal);
+  box-shadow: none;
+}
+
+body[data-ts-eink="1"] .ts-dash {
+  --ts-dash-gap: 16px;
+}
+
+body[data-ts-eink="1"] .ts-dash-block-body {
+  backdrop-filter: none;
+}

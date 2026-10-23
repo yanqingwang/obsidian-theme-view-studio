@@ -2,6 +2,8 @@ import { Plugin } from "obsidian";
 import { DEFAULT_SETTINGS, ThemeProfile, ThemeStudioSettings } from "./types";
 import { ThemeEngine } from "./ThemeEngine";
 import { repairDashboardSettings } from "./dashboard/repair";
+import { DashboardView, VIEW_TYPE_DASHBOARD } from "./dashboard/DashboardView";
+import { dashboardGroups, type DashboardEditorState } from "./settings/dashboardGroups";
 import { ThemeStudioSettingTab } from "./settings/SettingsTab";
 import { PRESETS } from "./presets";
 import { tr } from "./i18n";
@@ -10,6 +12,18 @@ export default class ThemeStudioPlugin extends Plugin {
   settings!: ThemeStudioSettings;
   engine!: ThemeEngine;
   private statusEl: HTMLElement | null = null;
+  /**
+   * 当前打开的主页视图。设置改动后要通知它们重排 —— 这些视图自己会在onClose 时
+   * 把自己摘掉，所以这里不需要额外清理。
+   */
+  readonly dashboardViews = new Set<DashboardView>();
+  /** 设置页与设置页之间共享的临时状态（不是插件设置）。 */
+  readonly dashboardEditor: DashboardEditorState = {
+    editingBlockId: "",
+    pendingType: "stats",
+    pendingSize: 1,
+    pendingTitle: "",
+  };
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -17,7 +31,16 @@ export default class ThemeStudioPlugin extends Plugin {
     this.engine = new ThemeEngine(this.app, () => this.settings);
     this.engine.mount();
 
+    this.registerView(VIEW_TYPE_DASHBOARD, (leaf) => new DashboardView(leaf, this));
     this.addSettingTab(new ThemeStudioSettingTab(this.app, this));
+
+    // 启动时自动打开主页：等布局就绪再开，否则第一次启动工作区还没建好。
+    this.app.workspace.onLayoutReady(() => {
+      const d = this.settings.dashboard;
+      if (!d.enabled || !d.openOnStartup) return;
+      if (this.app.workspace.getLeavesOfType(VIEW_TYPE_DASHBOARD).length > 0) return;
+      void this.openDashboard();
+    });
 
     // 当前活动文件变化、标签切换、文件重命名都会改变命中的文件夹规则。
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.refreshTheme()));
@@ -30,6 +53,12 @@ export default class ThemeStudioPlugin extends Plugin {
       id: "open-settings",
       name: tr("Open Theme View Studio settings", "打开 Theme View Studio 设置"),
       callback: () => this.openSettings(),
+    });
+
+    this.addCommand({
+      id: "open-dashboard",
+      name: tr("Open dashboard", "打开主页"),
+      callback: () => void this.openDashboard(),
     });
 
     this.addCommand({
@@ -61,6 +90,26 @@ export default class ThemeStudioPlugin extends Plugin {
     await this.saveData(this.settings);
     this.engine.render();
     this.updateStatusBarVisibility();
+    // 主页开着就重排一次，用户在设置里改完能立刻看到效果，不用手动刷新页面。
+    for (const view of this.dashboardViews) view.reconfigure();
+  }
+
+  /** 打开（若已打开则聚焦）主页标签页。 */
+  async openDashboard(): Promise<void> {
+    const { workspace } = this.app;
+    const existing = workspace.getLeavesOfType(VIEW_TYPE_DASHBOARD);
+    const leaf = existing[0] ?? workspace.getLeaf("tab");
+    await leaf.setViewState({ type: VIEW_TYPE_DASHBOARD, active: true });
+    workspace.revealLeaf(leaf);
+  }
+
+  /** 供设置页构造主页分组。 */
+  get dashboardSettingItems() {
+    return dashboardGroups({
+      plugin: this,
+      editor: this.dashboardEditor,
+      openDashboard: () => void this.openDashboard(),
+    });
   }
 
   setStatusBarVisible(visible: boolean): void {

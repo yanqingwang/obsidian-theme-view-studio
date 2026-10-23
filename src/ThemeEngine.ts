@@ -1,4 +1,5 @@
 import { App } from "obsidian";
+import { cssEscape, toImageUrl } from "./imageUrl";
 import type { ThemeProfile, ThemeStudioSettings } from "./types";
 import { resolveProfile } from "./ScopeResolver";
 
@@ -71,19 +72,6 @@ export function hexToRgba(hex: string, alpha: number): string {
   const b = parseInt(full.slice(4, 6), 16);
   const a = Math.min(1, Math.max(0, alpha));
   return `rgba(${r}, ${g}, ${b}, ${a})`;
-}
-
-/** 背景图统一成可用的 URL：vault 相对路径走 Obsidian 资源路径，其余视为外部 URL。 */
-function toImageUrl(app: App, value: string): string | null {
-  const raw = value.trim();
-  if (!raw) return null;
-  if (/^(https?:|data:|app:\/\/)/i.test(raw)) return raw;
-  const path = raw.replace(/^\/+/, "");
-  return app.vault.adapter.getResourcePath(path);
-}
-
-function cssEscape(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
 /**
