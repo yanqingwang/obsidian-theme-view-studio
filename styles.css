@@ -430,3 +430,20 @@ body[data-ts-eink="1"] .ts-dash {
 body[data-ts-eink="1"] .ts-dash-block-body {
   backdrop-filter: none;
 }
+
+.ts-dash-block-foot {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-top: 8px;
+  font-size: var(--font-ui-smaller);
+}
+
+.ts-dash-block-sha {
+  color: var(--text-faint);
+  font-family: var(--font-monospace, monospace);
+}
+
+.ts-dash-error {
+  color: var(--text-error);
+}

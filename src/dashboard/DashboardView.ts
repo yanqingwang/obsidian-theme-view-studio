@@ -89,6 +89,7 @@ export class DashboardView extends ItemView {
   reconfigure(): void {
     if (!this.mounted) return;
     this.disposeInstances();
+    this.buildToolbar();
     this.buildGrid();
     this.mountBlocks();
     this.refresher?.suspend();
@@ -101,23 +102,7 @@ export class DashboardView extends ItemView {
     this.contentEl.empty();
     this.contentEl.addClass("ts-dash");
 
-    const toolbar = this.contentEl.createDiv({ cls: "ts-dash-toolbar" });
-    toolbar.createDiv({ cls: "ts-dash-toolbar-title", text: tr("Dashboard", "主页") });
-
-    const refreshBtn = toolbar.createEl("button", {
-      cls: "ts-dash-toolbar-btn",
-      text: tr("Refresh all", "全部刷新"),
-      attr: { type: "button" },
-    });
-    refreshBtn.addEventListener("click", () => void this.refreshAll());
-
-    const settingsBtn = toolbar.createEl("button", {
-      cls: "ts-dash-toolbar-btn",
-      text: tr("Settings", "设置"),
-      attr: { type: "button" },
-    });
-    settingsBtn.addEventListener("click", () => this.plugin.openSettings());
-
+    this.buildToolbar();
     this.buildGrid();
     this.mountBlocks();
 
@@ -135,10 +120,31 @@ export class DashboardView extends ItemView {
     this.mounted = true;
   }
 
+  private buildToolbar(): void {
+    const toolbar = this.contentEl.createDiv({ cls: "ts-dash-toolbar" });
+    toolbar.createDiv({ cls: "ts-dash-toolbar-title", text: tr("Dashboard", "主页") });
+
+    const refreshBtn = toolbar.createEl("button", {
+      cls: "ts-dash-toolbar-btn",
+      text: tr("Refresh all", "全部刷新"),
+      attr: { type: "button" },
+    });
+    refreshBtn.addEventListener("click", () => void this.refreshAll());
+
+    const settingsBtn = toolbar.createEl("button", {
+      cls: "ts-dash-toolbar-btn",
+      text: tr("Settings", "设置"),
+      attr: { type: "button" },
+    });
+    settingsBtn.addEventListener("click", () => this.plugin.openSettings());
+  }
+
   private buildGrid(): void {
     const settings = this.plugin.settings.dashboard;
     const grid = getGrid(settings.gridId);
 
+    // 必须先清空：reconfigure() 也会走到这里，不清就会每次设置改动都叠一层新网格。
+    this.contentEl.empty();
     this.gridEl = this.contentEl.createDiv({ cls: "ts-dash-grid" });
     this.gridEl.style.setProperty("--ts-dash-cols", String(grid.columns));
     this.gridEl.style.setProperty("--ts-dash-cols-md", String(COLS_MD));

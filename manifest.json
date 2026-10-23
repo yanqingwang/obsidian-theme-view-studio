@@ -1,7 +1,7 @@
 {
   "id": "theme-view-studio",
   "name": "Theme View Studio",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "minAppVersion": "1.13.0",
   "description": "Folder-scoped appearance: reading width, typography, background image and opacity, transparency, and an e-ink mode. One default theme for the vault, different looks per folder.",
   "author": "rosswang",

@@ -55,22 +55,19 @@ export class DashboardRefresher {
     await this.pass("manual");
   }
 
-  /** 库内容变化：只刷"库变更时自动刷新"的积木（目前是 Dataview 块）。 */
+  /**
+   * 库内容变化：只刷声明了"库变化时自动刷新"的块（目前只有 Dataview 块）。
+   *
+   *刻意不给其它块开这个口子：GitHub 块若跟着每次编辑刷新，分分钟就会撞上匿名 API 的
+   * 60 次/小时上限。其它块本来就便宜，走各自的刷新间隔即可。
+   */
   async refreshOnVaultChange(): Promise<void> {
-    const settings = this.getSettings();
-    const now = Date.now();
-    const instances = this.getInstances();
     const jobs: Promise<void>[] = [];
-
-    for (const instance of instances) {
+    for (const instance of this.getInstances()) {
       const block = this.blockOf(instance);
-      if (!block) continue;
-      if (block.type === "dataview" && !block.refreshOnChange) continue;
-      // 统计/属性类计算很便宜，但没必要每次改文件都重算全部；给个 30 秒下限。
-      if (block.type !== "dataview" && now - instance.lastRefresh < 30_000) continue;
+      if (!block || block.type !== "dataview" || !block.refreshOnChange) continue;
       jobs.push(this.refreshOne(instance, "interval"));
     }
-    void settings;
     await Promise.all(jobs);
   }
 

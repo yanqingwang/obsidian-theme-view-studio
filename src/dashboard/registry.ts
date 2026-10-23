@@ -10,6 +10,8 @@ import type { AnyBlockRenderer, BlockRenderContext, BlockTypeInfo } from "./type
 import { statsRenderer } from "./blocks/StatsBlock";
 import { noteFieldRenderer } from "./blocks/NoteFieldBlock";
 import { embedNoteRenderer } from "./blocks/EmbedNoteBlock";
+import { githubFileRenderer } from "./blocks/GithubBlock";
+import { dataviewRenderer } from "./blocks/DataviewBlock";
 import { tr } from "../i18n";
 
 /** 渲染器表。写入侧是受控的常量，读取侧只在 block.type 与 key 严格相等时使用。 */
@@ -17,12 +19,16 @@ const RENDERERS: Partial<Record<DashboardBlockType, AnyBlockRenderer>> = {
   stats: statsRenderer,
   "note-field": noteFieldRenderer,
   "embed-note": embedNoteRenderer,
+  "github-file": githubFileRenderer,
+  dataview: dataviewRenderer,
 };
 
 export const BLOCK_TYPES: BlockTypeInfo[] = [
   { type: "stats", label: { en: "Vault statistics", zh: "库内统计" } },
   { type: "note-field", label: { en: "Note field", zh: "笔记属性" } },
   { type: "embed-note", label: { en: "Embedded note", zh: "嵌入笔记" } },
+  { type: "github-file", label: { en: "GitHub file", zh: "GitHub 文件" } },
+  { type: "dataview", label: { en: "Dataview", zh: "Dataview" } },
 ];
 
 export function blockTypeLabel(type: string): string {
