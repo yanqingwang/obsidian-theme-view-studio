@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Modal, Plugin } from "obsidian";
 import { DEFAULT_SETTINGS, ThemeProfile, ThemeStudioSettings } from "./types";
 import { ThemeEngine } from "./ThemeEngine";
 import { repairDashboardSettings } from "./dashboard/repair";
@@ -12,6 +12,8 @@ export default class ThemeStudioPlugin extends Plugin {
   settings!: ThemeStudioSettings;
   engine!: ThemeEngine;
   private statusEl: HTMLElement | null = null;
+  /** 设置页实例：积木增删等结构性改动后要调它的 update() 让表单重渲染。 */
+  private settingTab: ThemeStudioSettingTab | null = null;
   /**
    * 当前打开的主页视图。设置改动后要通知它们重排 —— 这些视图自己会在onClose 时
    * 把自己摘掉，所以这里不需要额外清理。
@@ -32,7 +34,8 @@ export default class ThemeStudioPlugin extends Plugin {
     this.engine.mount();
 
     this.registerView(VIEW_TYPE_DASHBOARD, (leaf) => new DashboardView(leaf, this));
-    this.addSettingTab(new ThemeStudioSettingTab(this.app, this));
+    this.settingTab = new ThemeStudioSettingTab(this.app, this);
+    this.addSettingTab(this.settingTab);
 
     // 启动时自动打开主页：等布局就绪再开，否则第一次启动工作区还没建好。
     this.app.workspace.onLayoutReady(() => {
@@ -109,7 +112,36 @@ export default class ThemeStudioPlugin extends Plugin {
       plugin: this,
       editor: this.dashboardEditor,
       openDashboard: () => void this.openDashboard(),
+      // 积木增/删/排序/进入编辑后，主页会通过 persist() 重排；这里补一次设置页自身的
+      // 重渲染，否则列表不会跟着变（用户会看到"主页变了但配置页没变"）。
+      onChanged: () => this.settingTab?.update(),
     });
+  }
+
+  /** 主页重置：清空全部积木。带确认弹窗，防误触。 */
+  confirmClearBlocks(): void {
+    const modal = new Modal(this.app);
+    modal.titleEl.setText(tr("Clear all blocks?", "清空全部积木？"));
+    modal.contentEl.createEl("p", {
+      text: tr(
+        "Removes every block from the homepage. You can always add them again afterwards.",
+        "将移除主页上的全部积木，之后可以随时重新添加。",
+      ),
+    });
+    const actions = modal.contentEl.createDiv({ cls: "ts-modal-actions" });
+    const confirm = actions.createEl("button", {
+      cls: "mod-warning",
+      text: tr("Clear all", "清空全部"),
+    });
+    const cancel = actions.createEl("button", { text: tr("Cancel", "取消") });
+    confirm.addEventListener("click", () => {
+      this.settings.dashboard.blocks = [];
+      this.dashboardEditor.editingBlockId = "";
+      modal.close();
+      void this.persist();
+    });
+    cancel.addEventListener("click", () => modal.close());
+    modal.open();
   }
 
   setStatusBarVisible(visible: boolean): void {

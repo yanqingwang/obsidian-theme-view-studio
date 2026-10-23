@@ -168,6 +168,9 @@ export class ThemeStudioSettingTab extends PluginSettingTab {
       } else {
         return;
       }
+      // 网格变了，积木列表的"x/cap 格"和添加表单的滑块上限都要跟着变 —— 依赖这个值的
+      // 渲染必须重跑一次；其余 dashboard 字段（gap/intervalMin/开关/token）没有这种联动。
+      if (name === "gridId") this.update();
       return this.plugin.persist();
     }
 

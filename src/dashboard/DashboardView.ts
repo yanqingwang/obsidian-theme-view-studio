@@ -121,6 +121,8 @@ export class DashboardView extends ItemView {
   }
 
   private buildToolbar(): void {
+    // reconfigure() 也会走到这里：先清掉上一轮的工具栏，避免越叠越多。
+    this.contentEl.querySelectorAll(".ts-dash-toolbar").forEach((el) => el.remove());
     const toolbar = this.contentEl.createDiv({ cls: "ts-dash-toolbar" });
     toolbar.createDiv({ cls: "ts-dash-toolbar-title", text: tr("Dashboard", "主页") });
 
@@ -143,8 +145,12 @@ export class DashboardView extends ItemView {
     const settings = this.plugin.settings.dashboard;
     const grid = getGrid(settings.gridId);
 
-    // 必须先清空：reconfigure() 也会走到这里，不清就会每次设置改动都叠一层新网格。
-    this.contentEl.empty();
+    // 只清上一轮的网格、溢出区和空态提示 —— 绝不能清 contentEl，否则会把刚建好的
+    // 工具栏一起清掉（旧实现主页上永远看不到"全部刷新/设置"按钮）。
+    this.gridEl?.remove();
+    this.overflowEl?.remove();
+    this.contentEl.querySelectorAll(".ts-dash-hint").forEach((el) => el.remove());
+
     this.gridEl = this.contentEl.createDiv({ cls: "ts-dash-grid" });
     this.gridEl.style.setProperty("--ts-dash-cols", String(grid.columns));
     this.gridEl.style.setProperty("--ts-dash-cols-md", String(COLS_MD));

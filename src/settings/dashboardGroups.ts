@@ -44,6 +44,8 @@ export interface DashboardGroupsHost {
   plugin: ThemeStudioPlugin;
   editor: DashboardEditorState;
   openDashboard(): void;
+  /** 结构性改动（增/删/排序/进出编辑）后触发设置页重渲染。主页本身由 persist() 负责。 */
+  onChanged?(): void;
 }
 
 export function blockFieldKey(blockId: string, field: string): string {
@@ -181,6 +183,22 @@ function mainGroup(host: DashboardGroupsHost, settings: DashboardSettings): Sett
           );
         },
       },
+      {
+        name: tr("Clear all blocks", "清空全部积木"),
+        desc: tr(
+          "Removes every block from the homepage. There is no undo — you can always add them again afterwards.",
+          "移除主页上的全部积木，不可撤销。之后可以随时重新添加。",
+        ),
+        render: (setting: Setting) => {
+          setting.addButton((b) =>
+            b
+              .setWarning()
+              .setButtonText(tr("Clear", "清空"))
+              .setDisabled(settings.blocks.length === 0)
+              .onClick(() => host.plugin.confirmClearBlocks()),
+          );
+        },
+      },
     ],
   };
 }
@@ -208,7 +226,8 @@ function blocksList(host: DashboardGroupsHost, settings: DashboardSettings): Set
             .setButtonText(tr("Edit", "编辑"))
             .onClick(() => {
               host.editor.editingBlockId = block.id;
-              host.plugin.persist();
+              void host.plugin.persist();
+              host.onChanged?.();
             }),
         );
       },
@@ -227,11 +246,13 @@ function blocksList(host: DashboardGroupsHost, settings: DashboardSettings): Set
         host.editor.editingBlockId = settings.blocks[0]?.id ?? "";
       }
       void host.plugin.persist();
+      host.onChanged?.();
     },
     onReorder: (oldIndex: number, newIndex: number) => {
       const [moved] = settings.blocks.splice(oldIndex, 1);
       if (moved) settings.blocks.splice(newIndex, 0, moved);
       void host.plugin.persist();
+      host.onChanged?.();
     },
   };
 }
@@ -316,6 +337,7 @@ async function addPendingBlock(
   host.editor.pendingTitle = "";
   host.editor.editingBlockId = settings.blocks[settings.blocks.length - 1].id;
   await host.plugin.persist();
+  host.onChanged?.();
 }
 
 // ── 编辑某一块 ────────────────────────────────────────────────────────────────
@@ -378,6 +400,7 @@ function editorGroups(
               b.setButtonText(tr("Done", "完成")).onClick(() => {
                 host.editor.editingBlockId = "";
                 void host.plugin.persist();
+                host.onChanged?.();
               }),
             );
           },
