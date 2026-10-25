@@ -156,7 +156,6 @@ export class DashboardView extends ItemView {
     this.gridEl.style.setProperty("--ts-dash-cols-md", String(COLS_MD));
     this.gridEl.style.setProperty("--ts-dash-cols-sm", String(COLS_SM));
     this.gridEl.style.setProperty("--ts-dash-gap", `${settings.gap}px`);
-    this.gridEl.style.setProperty("--ts-dash-row-min", "120px");
 
     this.overflowEl = this.contentEl.createDiv({ cls: "ts-dash-overflow" });
   }
