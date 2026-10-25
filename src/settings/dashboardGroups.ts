@@ -109,7 +109,7 @@ function mainGroup(host: DashboardGroupsHost, settings: DashboardSettings): Sett
           type: "dropdown",
           key: "dashboard.gridId",
           options: Object.fromEntries(
-            DASHBOARD_GRIDS.map((g) => [
+            DASHBOARD_GRIDS.map((g): [string, string] => [
               g.id,
               tr(`${g.columns} × ${g.rows} · ${g.n} cells`, `${g.columns} × ${g.rows} · ${g.n} 格`),
             ]),
@@ -272,7 +272,7 @@ function addBlockGroup(host: DashboardGroupsHost, settings: DashboardSettings): 
           type: "dropdown",
           key: "dashboard.newBlock.type",
           options: Object.fromEntries(
-            BLOCK_TYPES.map((t) => [t.type, tr(t.label.en, t.label.zh)]),
+            BLOCK_TYPES.map((t): [string, string] => [t.type, tr(t.label.en, t.label.zh)]),
           ),
           defaultValue: host.editor.pendingType,
         },
@@ -416,15 +416,15 @@ function typedGroups(
 ): SettingDefinitionItem[] {
   switch (block.type) {
     case "stats":
-      return [statsGroup(block as StatsBlock, key)];
+      return [statsGroup(block, key)];
     case "note-field":
-      return [noteFieldGroup(block as NoteFieldBlock, key)];
+      return [noteFieldGroup(block, key)];
     case "embed-note":
-      return [embedGroup(block as EmbedNoteBlock, key)];
+      return [embedGroup(block, key)];
     case "github-file":
-      return [githubGroup(block as GithubFileBlock, key)];
+      return [githubGroup(block, key)];
     case "dataview":
-      return [dataviewGroup(block as DataviewBlock, key)];
+      return [dataviewGroup(block, key)];
     default:
       // 类型集合是封闭的，理论到不了这里；真到了就交给分发器显示"未知类型"。
       return [];
@@ -449,10 +449,9 @@ function statsGroup(block: StatsBlock, key: (f: string) => string): SettingDefin
           type: "dropdown",
           key: key("stat"),
           options: Object.fromEntries(
-            (Object.keys(STAT_LABELS) as (keyof typeof STAT_LABELS)[]).map((k) => [
-              k,
-              tr(STAT_LABELS[k].en, STAT_LABELS[k].zh),
-            ]),
+            (Object.keys(STAT_LABELS) as (keyof typeof STAT_LABELS)[]).map(
+              (k): [string, string] => [k, tr(STAT_LABELS[k].en, STAT_LABELS[k].zh)],
+            ),
           ),
           defaultValue: block.stat,
         },

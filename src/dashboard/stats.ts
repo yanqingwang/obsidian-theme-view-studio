@@ -45,7 +45,7 @@ function isUntagged(app: App, file: TFile): boolean {
   const cache = app.metadataCache.getFileCache(file);
   if (!cache) return true;
   // frontmatter 里的 tags 和行内标签是两套来源，两个都算上。
-  const frontmatterTags = cache.frontmatter?.tags;
+  const frontmatterTags: unknown = cache.frontmatter?.tags;
   if (Array.isArray(frontmatterTags) && frontmatterTags.length > 0) return false;
   if (typeof frontmatterTags === "string" && frontmatterTags.trim() !== "") return false;
   return !cache.tags || cache.tags.length === 0;

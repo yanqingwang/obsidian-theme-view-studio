@@ -103,7 +103,7 @@ export default class ThemeStudioPlugin extends Plugin {
     const existing = workspace.getLeavesOfType(VIEW_TYPE_DASHBOARD);
     const leaf = existing[0] ?? workspace.getLeaf("tab");
     await leaf.setViewState({ type: VIEW_TYPE_DASHBOARD, active: true });
-    workspace.revealLeaf(leaf);
+    await workspace.revealLeaf(leaf);
   }
 
   /** 供设置页构造主页分组。 */

@@ -35,7 +35,7 @@ export class BlockInstance {
     this.headEl = this.el.createDiv({ cls: "ts-dash-block-head" });
     this.titleEl = this.headEl.createSpan({ cls: "ts-dash-block-title" });
     this.titleEl.textContent = showTitle ? title : "";
-    this.headEl.createEl("span", { cls: "ts-dash-block-stale", text: "" });
+    this.headEl.createSpan({ cls: "ts-dash-block-stale", text: "" });
     this.headEl.createDiv({ cls: "ts-dash-block-actions" });
 
     const btn = this.headEl.createEl("button", {

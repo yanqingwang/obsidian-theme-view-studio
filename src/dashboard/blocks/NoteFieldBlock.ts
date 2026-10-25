@@ -5,7 +5,8 @@
  * status: 只有两篇笔记，按固定 schema 写会几乎永远取不到东西。
  */
 
-import type { App, TFile } from "obsidian";
+import type { App } from "obsidian";
+import { TFile } from "obsidian";
 import type { NoteFieldBlock } from "../../types";
 import type { BlockRenderer } from "../types";
 import { tr } from "../../i18n";
@@ -30,11 +31,11 @@ function resolveNote(app: App, notePath: string): TFile | null {
   const path = notePath.trim();
   if (!path) return app.workspace.getActiveFile();
   const file = app.vault.getAbstractFileByPath(path);
-  if (file && "extension" in file) return file as TFile;
+  if (file instanceof TFile) return file;
   // 没写 .md 后缀时也试一次，省得用户为了路径格式纠结。
   if (!path.endsWith(".md")) {
     const alt = app.vault.getAbstractFileByPath(`${path}.md`);
-    if (alt && "extension" in alt) return alt as TFile;
+    if (alt instanceof TFile) return alt;
   }
   return null;
 }
@@ -82,7 +83,7 @@ export const noteFieldRenderer: BlockRenderer<NoteFieldBlock> = {
       return;
     }
 
-    const raw = frontmatter[block.field.trim()];
+    const raw: unknown = frontmatter[block.field.trim()];
     if (raw === undefined || raw === null || raw === "") {
       const fallback = block.fallback.trim();
       if (fallback) {

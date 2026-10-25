@@ -5,8 +5,7 @@
  * 而且渲染器会把内部链接、嵌入、frontmatter 解析成真正可点的样子。
  */
 
-import { MarkdownRenderer } from "obsidian";
-import type { TFile } from "obsidian";
+import { MarkdownRenderer, TFile } from "obsidian";
 import type { EmbedNoteBlock } from "../../types";
 import type { BlockRenderer } from "../types";
 import { toImageUrl } from "../../imageUrl";
@@ -16,10 +15,10 @@ function resolveNote(ctx: { app: import("obsidian").App }, notePath: string): TF
   const path = notePath.trim();
   if (!path) return null;
   const file = ctx.app.vault.getAbstractFileByPath(path);
-  if (file && "extension" in file) return file as TFile;
+  if (file instanceof TFile) return file;
   if (!path.endsWith(".md")) {
     const alt = ctx.app.vault.getAbstractFileByPath(`${path}.md`);
-    if (alt && "extension" in alt) return alt as TFile;
+    if (alt instanceof TFile) return alt;
   }
   return null;
 }
