@@ -114,10 +114,10 @@ npm test      # grid packing + settings repair (node:test, no extra deps)
 Release assets are `main.js`, `manifest.json`, and `styles.css`. The release
 workflow builds these files and publishes build provenance attestations.
 
-### Feedback
+### Issues & Feedback
 
-- GitHub Issues: <https://github.com/yanqingwang/obsidian-theme-view-studio/issues>
-- Email: open an issue on the repository
+- GitHub Issues: https://github.com/yanqingwang/obsidian-theme-view-studio/issues
+- Email: wangyantsing@qq.com
 
 When reporting a problem, please include your Obsidian version, plugin
 version, and a screenshot or a short description of the expected result.
@@ -182,7 +182,7 @@ Obsidian 的文件夹级外观预设插件。整个库可以共用一套默认�
 文件夹规则按路径长度匹配。若 `Projects` 和 `Projects/Papers` 同时命中一个文件，
 则使用 `Projects/Papers` 的规则。
 
-插件还会在命令面板中提供两个命令：
+插件还会在命令面板中提供三个命令：
 
 - **打开 Theme View Studio 设置**
 - **打开主页**
@@ -221,17 +221,13 @@ npm run build  # 类型检查并生成生产构建
 
 发布资源为 `main.js`、`manifest.json` 和 `styles.css`。发布流程会重新构建这些文件，并生成构建来源证明（artifact attestation）。
 
-### 反馈
+### 问题与反馈
 
-- GitHub Issues：<https://github.com/yanqingwang/obsidian-theme-view-studio/issues>
-- 邮箱：在仓库提issue
+- GitHub Issues: https://github.com/yanqingwang/obsidian-theme-view-studio/issues
+- 邮箱：wangyantsing@qq.com
 
 反馈问题时，请尽量附上 Obsidian 版本、插件版本，以及截图或预期结果说明。
 
 ### 许可证
 
 [MIT](LICENSE)
-
----
-
-[English](#english) | [中文](#中文)
