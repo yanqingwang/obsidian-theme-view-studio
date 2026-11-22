@@ -1,5 +1,6 @@
 import { Modal, Plugin } from "obsidian";
 import { DEFAULT_SETTINGS, ThemeProfile, ThemeStudioSettings } from "./types";
+import { normalizeLineNumberMode } from "./lineNumbers";
 import { ThemeEngine } from "./ThemeEngine";
 import { repairDashboardSettings } from "./dashboard/repair";
 import { DashboardView, VIEW_TYPE_DASHBOARD } from "./dashboard/DashboardView";
@@ -183,6 +184,11 @@ export default class ThemeStudioPlugin extends Plugin {
     if (!Array.isArray(this.settings.scopeRules)) this.settings.scopeRules = [];
     if (!this.settings.profiles.some((p) => p.id === this.settings.defaultProfileId)) {
       this.settings.defaultProfileId = this.settings.profiles[0].id;
+    }
+    // 行号是 v1.3.3 才有的字段：老用户的主题对象里没有它，浅合并补不上，逐个规范化。
+    // 缺失/非法值一律 auto（不改动 Obsidian 自己的行号设置）。
+    for (const profile of this.settings.profiles) {
+      profile.lineNumbers = normalizeLineNumberMode(profile.lineNumbers);
     }
     // 主页是 v1.3.0 才有的字段，老用户的 data.json 里根本没有它；而 Object.assign 是浅合并，
     // 所以必须显式修一次，不能指望默认值兜住（repair 对任何奇怪输入都不抛异常）。

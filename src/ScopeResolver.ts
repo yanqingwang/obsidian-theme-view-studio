@@ -68,5 +68,6 @@ function emptyProfile(): ThemeProfile {
     accentColor: "",
     eink: false,
     einkContrast: 1,
+    lineNumbers: "auto",
   };
 }

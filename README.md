@@ -18,7 +18,8 @@ background, transparency, or e-ink treatment.
   vault.
 - **Per-theme controls** for reading and editing width, font size and family,
   line height, paragraph spacing, background color and opacity, wallpaper,
-  sidebar opacity, blur, text/muted/accent colors, and e-ink mode.
+  sidebar opacity, blur, text/muted/accent colors, editor line numbers
+  (follow Obsidian / always show / always hide), and e-ink mode.
 - **E-ink mode** grayscales the workspace, removes motion and shadows, and
   lets you tune contrast.
 - **Custom dashboard** — your own home tab, built from a grid of blocks: vault
@@ -139,7 +140,7 @@ Obsidian 的文件夹级外观预设插件。整个库可以共用一套默认�
   `Projects/Reading` 可以覆盖 `Projects`，而不影响库里的其他文件。
 - **每套主题独立配置**：阅读/编辑视图宽度、字号与字体、行高、段间距、
   背景色与不透明度、背景图、侧栏不透明度、模糊、正文/次要文字/强调色，
-  以及墨水屏模式和对比度。
+  编辑器行号（跟随 Obsidian / 始终显示 / 始终隐藏），以及墨水屏模式和对比度。
 - **墨水屏模式**：工作区灰度化、关闭动画与阴影，并可调整对比度。
 - **自定义主页**：你自己的首页标签页，由网格里的积木拼成 —— 库内统计、从任意笔记
   frontmatter 取字段、嵌入笔记、从 GitHub 仓库拉文件、Dataview 查询。单块可占 1 到 8

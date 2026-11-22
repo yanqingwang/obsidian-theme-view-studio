@@ -396,6 +396,23 @@ export class ThemeStudioSettingTab extends PluginSettingTab {
               defaultValue: profile.fontFamily,
             },
           },
+          {
+            name: tr("Line numbers", "行号"),
+            desc: tr(
+              "Editor line numbers while this theme is active. Follow leaves Obsidian's own setting alone; the original value is restored when the theme stops applying.",
+              "这套主题生效时的编辑器行号。跟随表示不改动 Obsidian 自身的行号设置；主题不再生效时恢复原值。",
+            ),
+            control: {
+              type: "dropdown",
+              key: "profile.lineNumbers",
+              options: {
+                auto: tr("Follow Obsidian", "跟随 Obsidian"),
+                on: tr("Always show", "始终显示"),
+                off: tr("Always hide", "始终隐藏"),
+              },
+              defaultValue: profile.lineNumbers,
+            },
+          },
         ],
       },
       {

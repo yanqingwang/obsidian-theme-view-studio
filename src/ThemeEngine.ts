@@ -1,7 +1,8 @@
 import { App } from "obsidian";
 import { cssEscape, toImageUrl } from "./imageUrl";
-import type { ThemeProfile, ThemeStudioSettings } from "./types";
+import type { LineNumberMode, ThemeProfile, ThemeStudioSettings } from "./types";
 import { resolveProfile } from "./ScopeResolver";
+import { LINE_NUMBER_CONFIG_KEY, normalizeLineNumberMode, planLineNumbers } from "./lineNumbers";
 
 const BODY_PROFILE_ATTR = "data-ts-profile";
 const BODY_EINK_ATTR = "data-ts-eink";
@@ -84,11 +85,16 @@ export class ThemeEngine {
     private getSettings: () => ThemeStudioSettings,
   ) {}
 
+  /** 主题接管行号开关前的用户原值；null = 当前没被接管。 */
+  private lineNumberRestore: boolean | null = null;
+
   mount(): void {
     this.apply();
   }
 
   unmount(): void {
+    // 插件退出时把行号开关交还给用户；否则卸载后仍留着上一套主题的强制值。
+    this.syncLineNumbers("auto");
     this.clear(document.body);
   }
 
@@ -203,11 +209,27 @@ export class ThemeEngine {
       body.style.setProperty("--ts-eink-contrast", String(profile.einkContrast));
     }
 
+    this.syncLineNumbers(profile.lineNumbers);
     return profile;
   }
 
   private clear(body: HTMLElement): void {
     for (const attr of BODY_ATTRS) body.removeAttribute(attr);
     for (const prop of BODY_PROPS) body.style.removeProperty(prop);
+  }
+
+  /**
+   * Obsidian 的编辑器配置 API（核心设置页自己也在用）没有出现在 obsidian.d.ts 里，
+   * 所以按结构类型访问；键与内核 `editor:toggle-line-numbers` 命令一致。
+   */
+  private syncLineNumbers(mode: LineNumberMode): void {
+    const vault = this.app.vault as unknown as {
+      getConfig(key: string): unknown;
+      setConfig(key: string, value: unknown): void;
+    };
+    const current = vault.getConfig(LINE_NUMBER_CONFIG_KEY) === true;
+    const plan = planLineNumbers(normalizeLineNumberMode(mode), current, this.lineNumberRestore);
+    if (plan.write !== null) vault.setConfig(LINE_NUMBER_CONFIG_KEY, plan.write);
+    this.lineNumberRestore = plan.restore;
   }
 }

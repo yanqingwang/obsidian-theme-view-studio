@@ -38,7 +38,16 @@ export interface ThemeProfile {
   eink: boolean;
   /** 墨水屏对比度倍数 0.8..1.6。 */
   einkContrast: number;
+
+  /**
+   * 编辑器行号。auto = 不改动 Obsidian 自身的行号设置；
+   * on / off = 这套主题生效期间强制显示 / 隐藏，主题切走后恢复用户原值。
+   */
+  lineNumbers: LineNumberMode;
 }
+
+/** 行号模式：跟随 Obsidian / 强制显示 / 强制隐藏。 */
+export type LineNumberMode = "auto" | "on" | "off";
 
 /** 文件夹 → 主题 的绑定规则。 */
 export interface ScopeRule {

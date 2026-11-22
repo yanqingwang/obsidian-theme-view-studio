@@ -20,6 +20,7 @@ export const NEUTRAL_PROFILE: ProfileDraft = {
   accentColor: "",
   eink: false,
   einkContrast: 1,
+  lineNumbers: "auto",
 };
 
 export interface Preset {
